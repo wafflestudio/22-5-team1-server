@@ -1,0 +1,11 @@
+spring:
+    application:
+        name: team1server
+
+springdoc:
+    swagger-ui:
+        enabled: ${SPRING_DOC_SWAGGER_UI_ENABLED:true}
+        path: ${SPRING_DOC_SWAGGER_UI_PATH:/swagger-ui}
+    api-docs:
+        enabled: ${SPRING_DOC_API_DOCS_ENABLED:true}
+        path: ${SPRING_DOC_API_DOCS_PATH:/v3/api-docs}

@@ -32,6 +32,12 @@ services:
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: somepassword
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+      SPRING_DOC_SWAGGER_UI_ENABLED: "true"
+      SPRING_DOC_SWAGGER_UI_PATH: "/swagger-ui"
+      SPRING_DOC_API_DOCS_ENABLED: "true"
+      SPRING_DOC_API_DOCS_PATH: "/v3/api-docs"
+
     ports:
       - "8080:8080"  # 컨테이너를 호스트에 연결
     networks:

@@ -1,4 +1,4 @@
-package com.ToyProject.__5_team1_server
+package com.waffletoy.team1server
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class Application
 
 fun main(args: Array<String>) {
-	runApplication<Application>(*args)
+    runApplication<Application>(*args)
 }
