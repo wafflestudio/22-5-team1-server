@@ -18,8 +18,8 @@ class CoffeeChatNotFoundException(details: Map<String, Any>? = null) : ApiExcept
  *
  * @param details Additional context about the error, such as [userId] and [coffeeChatId].
  */
-class CoffeeChatForbiddenException(details: Map<String, Any>? = null) : ApiException(
-    errorCode = ErrorCode.COFFEECHAT_FORBIDDEN,
+class CoffeeChatUserForbiddenException(details: Map<String, Any>? = null) : ApiException(
+    errorCode = ErrorCode.COFFEECHAT_USER_FORBIDDEN,
     details = details,
 )
 
@@ -60,5 +60,15 @@ class CoffeeChatUpdateFailedException(details: Map<String, Any>? = null) : ApiEx
  */
 class CoffeeChatInvalidUserRoleException(details: Map<String, Any>? = null) : ApiException(
     errorCode = ErrorCode.COFFEECHAT_INVALID_USER_ROLE,
+    details = details,
+)
+
+class CoffeeChatPostExpiredException(details: Map<String, Any>? = null) : ApiException(
+    errorCode = ErrorCode.COFFEECHAT_POST_EXPIRED,
+    details = details,
+)
+
+class CoffeeChatStatusForbiddenException(details: Map<String, Any>? = null) : ApiException(
+    errorCode = ErrorCode.COFFEECHAT_STATUS_FORBIDDEN,
     details = details,
 )
