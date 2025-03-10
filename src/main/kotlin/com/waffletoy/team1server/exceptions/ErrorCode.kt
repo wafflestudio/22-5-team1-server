@@ -51,9 +51,12 @@ enum class ErrorCode(
 
     // COFFEECHAT-related errors
     COFFEECHAT_NOT_FOUND("COFFEECHAT_001", "The requested coffeeChat was not found.", HttpStatus.NOT_FOUND),
-    COFFEECHAT_FORBIDDEN("COFFEECHAT_002", "You do not have permission to perform this action.", HttpStatus.FORBIDDEN),
+    COFFEECHAT_USER_FORBIDDEN("COFFEECHAT_002", "You do not have permission to perform this action.", HttpStatus.FORBIDDEN),
     COFFEECHAT_CREATION_FAILED("COFFEECHAT_003", "Failed to create the coffeeChat.", HttpStatus.INTERNAL_SERVER_ERROR),
     COFFEECHAT_DELETION_FAILED("COFFEECHAT_004", "Failed to delete the coffeeChat.", HttpStatus.INTERNAL_SERVER_ERROR),
     COFFEECHAT_UPDATE_FAILED("COFFEECHAT_005", "Failed to update the coffeeChat.", HttpStatus.INTERNAL_SERVER_ERROR),
     COFFEECHAT_INVALID_USER_ROLE("COFFEECHAT_006", "Invalid user role for coffeeChat operations.", HttpStatus.FORBIDDEN),
+    COFFEECHAT_POST_EXPIRED("COFFEECHAT_007", "The application for Coffee Chat is now closed.(Post deadline)", HttpStatus.FORBIDDEN),
+    COFFEECHAT_STATUS_FORBIDDEN("COFFEECHAT_008", "You cannot change the status of the coffeeChat", HttpStatus.FORBIDDEN),
+    COFFEECHAT_DUPLICATION_FORBIDDEN("COFFEECHAT_009", "A Coffee Chat already exists that is waiting.", HttpStatus.FORBIDDEN),
 }
