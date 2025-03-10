@@ -7,7 +7,7 @@ import com.waffletoy.team1server.coffeeChat.dto.CoffeeChatDetail
 import com.waffletoy.team1server.coffeeChat.service.CoffeeChatService
 import com.waffletoy.team1server.user.AuthUser
 import com.waffletoy.team1server.user.UserRole
-import com.waffletoy.team1server.user.dtos.User
+import com.waffletoy.team1server.user.dto.User
 import io.swagger.v3.oas.annotations.Parameter
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -90,8 +90,8 @@ class CoffeeChatController(
         // Transactional을 위해 호출 분리
         val coffeeChatList =
             when (user.userRole) {
-                UserRole.NORMAL -> coffeeChatService.getCoffeeChatListApplicant(user)
-                UserRole.CURATOR -> coffeeChatService.getCoffeeChatListCompany(user)
+                UserRole.APPLICANT -> coffeeChatService.getCoffeeChatListApplicant(user)
+                UserRole.COMPANY -> coffeeChatService.getCoffeeChatListCompany(user)
             }
         return ResponseEntity.ok(
             CoffeeChatList(

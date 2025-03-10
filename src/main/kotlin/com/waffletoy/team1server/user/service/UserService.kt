@@ -7,134 +7,124 @@ import com.waffletoy.team1server.exceptions.*
 import com.waffletoy.team1server.post.service.PostService
 import com.waffletoy.team1server.user.*
 import com.waffletoy.team1server.user.controller.*
-import com.waffletoy.team1server.user.dtos.*
+import com.waffletoy.team1server.user.dto.*
 import com.waffletoy.team1server.user.persistence.UserEntity
 import com.waffletoy.team1server.user.persistence.UserRepository
+import com.waffletoy.team1server.user.utils.PasswordGenerator
 import com.waffletoy.team1server.user.utils.UserTokenUtil
-import jakarta.transaction.Transactional
 import org.mindrot.jbcrypt.BCrypt
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Lazy
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
-@Transactional
 @Service
 class UserService(
     private val userRepository: UserRepository,
     private val userRedisCacheService: UserRedisCacheService,
-    private val googleOAuth2Client: GoogleOAuth2Client,
     @Lazy private val emailService: EmailService,
-    @Lazy private val coffeeChatService: CoffeeChatService,
-    @Lazy private val postService: PostService,
+//    @Lazy private val coffeeChatService: CoffeeChatService,
+//    @Lazy private val postService: PostService,
 ) {
-    // Sign up functions
-    fun checkDuplicateId(request: CheckDuplicateIdRequest) {
-        if (userRepository.existsByLocalLoginId(request.id)) {
-            throw UserDuplicateLocalIdException(
-                details = mapOf("localLoginId" to request.id),
-            )
-        }
-    }
-
-    fun checkDuplicateSnuMail(request: CheckDuplicateSnuMailRequest) {
-        if (userRepository.existsBySnuMail(request.snuMail)) {
-            throw UserDuplicateSnuMailException(
-                details = mapOf("snuMail" to request.snuMail),
-            )
-        }
-    }
+    @Autowired
+    private lateinit var applicationContext: ApplicationContext
 
     @Transactional
     fun signUp(request: SignUpRequest): Pair<User, UserTokenUtil.Tokens> {
         val user: User =
             when (request.authType) {
-                SignUpRequest.AuthType.LOCAL_NORMAL -> {
-                    val info = request.info as SignUpRequest.LocalNormalInfo
-                    localNormalSignUp(info)
+                UserRole.APPLICANT -> {
+                    val info = request.info as SignUpRequest.LocalApplicantInfo
+                    localApplicantSignUp(info)
                 }
 
-                SignUpRequest.AuthType.LOCAL_CURATOR -> {
-                    val info = request.info as SignUpRequest.LocalCuratorInfo
-                    localCuratorSignUp(info)
+                UserRole.COMPANY -> {
+                    val info = request.info as SignUpRequest.LocalCompanyInfo
+                    localCompanySignUp(info)
                 }
             }
         val tokens = UserTokenUtil.generateTokens(user)
 
         // 발급 받은 refresh token을 redis에 저장합니다.
         userRedisCacheService.saveRefreshToken(user.id, tokens.refreshToken)
-
         return Pair(user, tokens)
     }
 
-    private fun localNormalSignUp(info: SignUpRequest.LocalNormalInfo): User {
-        var user = userRepository.findBySnuMail(info.snuMail)
-        if (user != null) {
-            if (user.userRole != UserRole.NORMAL) {
+    private fun localApplicantSignUp(info: SignUpRequest.LocalApplicantInfo): User {
+        // 이미 존재하는 계정 확인
+        val existingUser = userRepository.findByMail(info.mail)
+        existingUser?.let {
+            if (it.userRole != UserRole.APPLICANT) {
                 throw NotAuthorizedException(
-                    details = mapOf("userId" to user.id, "userRole" to user.userRole),
-                )
-            } else {
-                throw UserDuplicateSnuMailException(
-                    details = mapOf("snuMail" to info.snuMail),
+                    details = mapOf("userId" to it.id, "userRole" to it.userRole),
                 )
             }
-        } else {
-            if (userRepository.existsByLocalLoginId(info.localLoginId)) {
-                throw UserDuplicateLocalIdException(
-                    details = mapOf("localLoginId" to info.localLoginId),
-                )
-            }
-            user =
-                userRepository.save(
-                    UserEntity(
-                        snuMail = info.snuMail,
-                        name = info.name,
-                        localLoginId = info.localLoginId,
-                        localLoginPasswordHash = BCrypt.hashpw(info.password, BCrypt.gensalt()),
-                        userRole = UserRole.NORMAL,
-                    ),
-                )
+            throw UserDuplicateSnuMailException(
+                details = mapOf("snuMail" to info.mail),
+            )
         }
-        return User.fromEntity(entity = user)
+
+        // 이메일(아이디) 중복 확인
+        if (userRepository.existsByMail(info.mail)) {
+            throw UserDuplicateLocalIdException(
+                details = mapOf("mail" to info.mail),
+            )
+        }
+
+        // 새로운 사용자 생성
+        val user =
+            UserEntity(
+                name = info.name,
+                mail = info.mail,
+                passwordHash = BCrypt.hashpw(info.password, BCrypt.gensalt()),
+                userRole = UserRole.APPLICANT,
+            ).let { userRepository.save(it) }
+
+        return User.fromEntity(user)
     }
 
-    private fun localCuratorSignUp(info: SignUpRequest.LocalCuratorInfo): User {
+    private fun localCompanySignUp(info: SignUpRequest.LocalCompanyInfo): User {
+        // 관리자 비밀번호 확인
         if (info.secretPassword != devSecret) {
             throw InvalidCredentialsException(
                 details = mapOf("secretPassword" to info.secretPassword),
             )
         }
 
-        if (userRepository.existsByLocalLoginId(info.localLoginId)) {
+        // 이메일(아이디) 중복 확인
+        if (userRepository.existsByMail(info.mail)) {
             throw UserDuplicateLocalIdException(
-                details = mapOf("localLoginId" to info.localLoginId),
+                details = mapOf("mail" to info.mail),
             )
         }
+
+        // 새로운 사용자 생성
         val user =
-            userRepository.save(
-                UserEntity(
-                    name = info.name,
-                    localLoginId = info.localLoginId,
-                    localLoginPasswordHash = BCrypt.hashpw(info.password, BCrypt.gensalt()),
-                    userRole = UserRole.CURATOR,
-                    snuMail = null,
-                ),
-            )
-        return User.fromEntity(entity = user)
+            UserEntity(
+                name = info.name,
+                mail = info.mail,
+                passwordHash = BCrypt.hashpw(info.password, BCrypt.gensalt()),
+                userRole = UserRole.COMPANY,
+            ).let { userRepository.save(it) }
+
+        return User.fromEntity(user)
     }
 
-    // Signing in and out
-
+    // 로그인
     @Transactional
     fun signIn(request: SignInRequest): Pair<User, UserTokenUtil.Tokens> {
-        val user: User =
-            when (request.authType) {
-                SignInRequest.AuthType.LOCAL -> {
-                    val info = request.info as SignInRequest.LocalInfo
-                    localSignIn(info)
-                }
-            }
+        val userEntity =
+            userRepository.findByMail(request.mail)
+                ?: throw InvalidCredentialsException()
+
+        if (!BCrypt.checkpw(request.password, userEntity.passwordHash)) {
+            throw InvalidCredentialsException()
+        }
+
+        val user = User.fromEntity(userEntity)
 
         // 기존 refresh token 을 만료합니다.(RTR)
         userRedisCacheService.deleteRefreshTokenByUserId(user.id)
@@ -145,18 +135,6 @@ class UserService(
         userRedisCacheService.saveRefreshToken(user.id, tokens.refreshToken)
 
         return Pair(user, tokens)
-    }
-
-    private fun localSignIn(info: SignInRequest.LocalInfo): User {
-        val user =
-            userRepository.findByLocalLoginId(info.localLoginId)
-                ?: throw InvalidCredentialsException()
-
-        if (!BCrypt.checkpw(info.password, user.localLoginPasswordHash)) {
-            throw InvalidCredentialsException()
-        }
-
-        return User.fromEntity(entity = user)
     }
 
     fun signOut(
@@ -173,7 +151,6 @@ class UserService(
                 details = mapOf("userId" to user.id, "refreshTokenUserId" to userId),
             )
         }
-        // Additional sign-out logic if necessary
 
         // 로그아웃 시 Refresh Token 삭제
         // (Access Token 은 클라이언트 측에서 삭제)
@@ -181,20 +158,6 @@ class UserService(
 
         // 추후 유저의 Access Token 을 Access Token 의 남은 유효시간 만큼
         // Redis 블랙리스트에 추가할 필요성 있음
-    }
-
-    // Token related functions
-    fun authenticate(accessToken: String): User {
-        val userId =
-            UserTokenUtil.validateAccessTokenGetUserId(accessToken)
-                ?: throw InvalidAccessTokenException()
-
-        val user =
-            userRepository.findByIdOrNull(userId)
-                ?: throw UserNotFoundException(
-                    details = mapOf("userId" to userId),
-                )
-        return User.fromEntity(entity = user)
     }
 
     @Transactional
@@ -221,20 +184,18 @@ class UserService(
         return tokens
     }
 
-    // Email verification
-
-    fun fetchGoogleAccountEmail(request: FetchGoogleAccountEmailRequest): String {
-        return googleOAuth2Client.getUserInfo(request.accessToken).email
+    // 메일(아이디) 중복 확인
+    @Transactional(readOnly = true)
+    fun checkDuplicateMail(request: MailRequest) {
+        if (userRepository.existsByMail(request.mail)) {
+            throw UserDuplicateSnuMailException(
+                details = mapOf("mail" to request.mail),
+            )
+        }
     }
 
-    fun sendSnuMailVerification(request: SendSnuMailVerificationRequest) {
-        // 이메일 인증 시 409 에러 불필요
-//        if (userRepository.existsBySnuMail(request.snuMail)) {
-//            throw UserDuplicateSnuMailException(
-//                details = mapOf("snuMail" to request.snuMail),
-//            )
-//        }
-
+    // Email verification
+    fun sendSnuMailVerification(request: SnuMailRequest) {
         val emailCode = (100000..999999).random().toString()
         val encryptedEmailCode = BCrypt.hashpw(emailCode, BCrypt.gensalt())
 
@@ -271,13 +232,7 @@ class UserService(
 
     @Transactional
     fun withdrawUser(user: User) {
-        // 일반 유저가 아닌 경우 탈퇴 불가
-        // 추후 curator의 탈퇴도 구현 필요할 수 있음
-        // 이 때는 company entity의 author 필드가 null로 변경?
-        // @ManyToOne(fetch = FetchType.LAZY, optional = true)
-        // @JoinColumn(name = "ADMIN", nullable = true)
-        // @OnDelete(action = OnDeleteAction.SET_NULL
-        if (user.userRole != UserRole.NORMAL) {
+        if (user.userRole != UserRole.APPLICANT) {
             throw NotAuthorizedException(
                 details = mapOf("userId" to user.id, "userRole" to user.userRole),
             )
@@ -289,7 +244,11 @@ class UserService(
                     details = mapOf("userId" to user.id),
                 )
 
-        // 외래키 제약이 걸려있는 bookmark, coffeeChat 를 삭제
+        // 순환 의존성 해결: 동적으로 빈을 가져와서 사용
+        val postService = applicationContext.getBean(PostService::class.java)
+        val coffeeChatService = applicationContext.getBean(CoffeeChatService::class.java)
+
+        // 외래키 제약이 걸려있는 bookmark, coffeeChat 삭제
         postService.deleteBookmarkByUser(userEntity)
         coffeeChatService.deleteCoffeeChatByUser(userEntity)
 
@@ -309,70 +268,36 @@ class UserService(
                 )
 
         // 기존 비밀번호를 비교
-        if (!BCrypt.checkpw(passwordRequest.oldPassword, userEntity.localLoginPasswordHash)) {
+        if (!BCrypt.checkpw(passwordRequest.oldPassword, userEntity.passwordHash)) {
             throw InvalidCredentialsException(
                 details = mapOf("oldPassword" to passwordRequest.oldPassword),
             )
         }
 
         // 새 비밀번호를 저장
-        userEntity.localLoginPasswordHash = BCrypt.hashpw(passwordRequest.newPassword, BCrypt.gensalt())
+        userEntity.passwordHash = BCrypt.hashpw(passwordRequest.newPassword, BCrypt.gensalt())
         userRepository.save(userEntity)
     }
 
-    fun findIdAndFetchInfo(findIdRequest: FindIdRequest) {
-        // 스누 메일을 기준으로 유저 찾기
+    @Transactional
+    fun resetPassword(mailRequest: MailRequest) {
+        // 메일을 기준으로 유저 찾기
         val user =
-            userRepository.findBySnuMail(findIdRequest.snuMail)
+            userRepository.findByMail(mailRequest.mail)
                 ?: throw UserNotFoundException(
-                    details = mapOf("snuMail" to findIdRequest.snuMail),
+                    details = mapOf("mail" to mailRequest.mail),
                 )
 
-        // 로컬 계정 유저의 정보를 제공 or 소셜 로그인 정보를 제공
-        try {
-            emailService.sendEmail(
-                to = user.snuMail!!,
-                subject = "[인턴하샤] 로그인 아이디 정보를 알려드립니다.",
-                text = "로그인 아이디 : ${user.localLoginId}",
-            )
-        } catch (ex: Exception) {
-            throw EmailSendFailureException(
-                details = mapOf("snuMail" to user.snuMail!!),
-            )
-        }
-    }
-
-    fun resetPassword(resetPasswordRequest: ResetPasswordRequest) {
-        // 스누 메일을 기준으로 유저 찾기
-        val user =
-            userRepository.findBySnuMail(resetPasswordRequest.snuMail)
-                ?: throw UserNotFoundException(
-                    details = mapOf("snuMail" to resetPasswordRequest.snuMail),
-                )
-
-        // 재설정 비밀번호 생성
-        val uppercase = ('A'..'Z').random()
-        val lowercase = ('a'..'z').random()
-        val digit = ('0'..'9').random()
-        val specialChars = "@#\$%^&+=!*"
-        val special = specialChars.random()
-
-        val allChars = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-        val remaining = List(4) { allChars.random() }
-
-        val newPassword =
-            (listOf(uppercase, lowercase, digit, special) + remaining)
-                .shuffled()
-                .joinToString("")
+        val newPassword = PasswordGenerator.generateRandomPassword()
 
         // 새 비밀번호를 저장
-        user.localLoginPasswordHash = BCrypt.hashpw(newPassword, BCrypt.gensalt())
+        user.passwordHash = BCrypt.hashpw(newPassword, BCrypt.gensalt())
         userRepository.save(user)
 
         // 로컬 계정 유저의 정보를 제공 or 소셜 로그인 정보를 제공
         try {
             emailService.sendEmail(
-                to = user.snuMail!!,
+                to = user.mail,
                 subject = "[인턴하샤] 임시 비밀번호를 알려드립니다.",
                 text =
                     """
@@ -382,23 +307,37 @@ class UserService(
             )
         } catch (ex: Exception) {
             throw EmailSendFailureException(
-                details = mapOf("snuMail" to user.snuMail!!),
+                details = mapOf("mail" to user.mail),
             )
         }
     }
 
     // 다른 서비스에서 UserId로 User 가져오기
+    @Transactional(readOnly = true)
     fun getUserEntityByUserId(userId: String): UserEntity? = userRepository.findByIdOrNull(userId)
 
+    // Token related functions
+    fun authenticate(accessToken: String): User {
+        val userId =
+            UserTokenUtil.validateAccessTokenGetUserId(accessToken)
+                ?: throw InvalidAccessTokenException()
+
+        val user =
+            userRepository.findByIdOrNull(userId)
+                ?: throw UserNotFoundException(
+                    details = mapOf("userId" to userId),
+                )
+        return User.fromEntity(entity = user)
+    }
+
     fun makeDummyUser(index: Int): UserEntity {
-        return userRepository.findByLocalLoginId("dummy$index")
+        return userRepository.findByMail("dummy$index@gmail.com")
             ?: userRepository.save(
                 UserEntity(
                     name = "dummy$index",
-                    localLoginId = "dummy$index",
-                    localLoginPasswordHash = BCrypt.hashpw("DummyPW$index!99", BCrypt.gensalt()),
-                    userRole = UserRole.CURATOR,
-                    snuMail = null,
+                    mail = "dummy$index@gmail.com",
+                    passwordHash = BCrypt.hashpw("DummyPW$index!99", BCrypt.gensalt()),
+                    userRole = UserRole.COMPANY,
                 ),
             )
     }

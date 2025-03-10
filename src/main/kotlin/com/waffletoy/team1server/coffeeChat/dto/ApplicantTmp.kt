@@ -10,9 +10,8 @@ data class ApplicantTmp(
     val createdAt: LocalDateTime? = null,
     val updatedAt: LocalDateTime? = null,
     val userRole: UserRole,
-    val snuMail: String?,
-    val phoneNumber: String?,
-    val imageLink: String?,
+    val mail: String?,
+    val imageKey: String?,
 ) {
     companion object {
         fun fromEntity(
@@ -24,9 +23,8 @@ data class ApplicantTmp(
                 createdAt = entity.createdAt,
                 updatedAt = entity.updatedAt,
                 userRole = entity.userRole,
-                snuMail = entity.snuMail,
-                phoneNumber = entity.phoneNumber,
-                imageLink = entity.profileImageLink,
+                mail = entity.mail,
+                imageKey = entity.profileImageLink,
             )
     }
 }

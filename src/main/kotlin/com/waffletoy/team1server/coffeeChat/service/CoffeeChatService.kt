@@ -9,7 +9,7 @@ import com.waffletoy.team1server.post.PostNotFoundException
 import com.waffletoy.team1server.post.persistence.PositionEntity
 import com.waffletoy.team1server.post.service.PostService
 import com.waffletoy.team1server.user.UserRole
-import com.waffletoy.team1server.user.dtos.User
+import com.waffletoy.team1server.user.dto.User
 import com.waffletoy.team1server.user.persistence.UserEntity
 import com.waffletoy.team1server.user.service.UserService
 import org.springframework.beans.factory.annotation.Value
@@ -34,8 +34,8 @@ class CoffeeChatService(
         coffeeChatId: String,
     ): CoffeeChatDetail {
         return when (user.userRole) {
-            UserRole.NORMAL -> getCoffeeChatDetailApplicant(user, coffeeChatId)
-            UserRole.CURATOR -> getCoffeeChatDetailCompany(user, coffeeChatId)
+            UserRole.APPLICANT -> getCoffeeChatDetailApplicant(user, coffeeChatId)
+            UserRole.COMPANY -> getCoffeeChatDetailCompany(user, coffeeChatId)
         }
     }
 
@@ -46,7 +46,7 @@ class CoffeeChatService(
         // 커피챗 찾기
         val coffeeChatEntity = getCoffeeChatEntity(coffeeChatId)
         // 작성자가 아니면 403
-        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.NORMAL)
+        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.APPLICANT)
         return CoffeeChatApplicant.fromEntity(coffeeChatEntity)
     }
 
@@ -57,7 +57,7 @@ class CoffeeChatService(
         // 커피챗 찾기
         val coffeeChatEntity = getCoffeeChatEntity(coffeeChatId)
         // 대상 회사가 아니면 403
-        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.CURATOR)
+        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.COMPANY)
         return CoffeeChatCompany.fromEntity(coffeeChatEntity)
     }
 
@@ -67,7 +67,7 @@ class CoffeeChatService(
         postId: String,
         coffeeChatContent: CoffeeChatContent,
     ): CoffeeChatApplicant {
-        if (user.userRole != UserRole.NORMAL) {
+        if (user.userRole != UserRole.APPLICANT) {
             throw CoffeeChatUserForbiddenException(
                 details = mapOf("userId" to user.id, "userRole" to user.userRole),
             )
@@ -127,7 +127,7 @@ class CoffeeChatService(
         // 커피챗 찾기
         val coffeeChatEntity = getCoffeeChatEntity(coffeeChatId)
         // 작성자가 아니면 403
-        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.NORMAL)
+        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.APPLICANT)
 
         // 대기 중인 커피챗만 수정 가능
         if (coffeeChatEntity.coffeeChatStatus != CoffeeChatStatus.WAITING) {
@@ -172,7 +172,7 @@ class CoffeeChatService(
         // 커피챗 찾기
         val coffeeChatEntity = getCoffeeChatEntity(coffeeChatId)
         // 작성자가 아니면 403
-        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.NORMAL)
+        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.APPLICANT)
         // 업데이트
         if (coffeeChatEntity.coffeeChatStatus == CoffeeChatStatus.WAITING) {
             coffeeChatEntity.coffeeChatStatus = CoffeeChatStatus.CANCELED
@@ -195,7 +195,7 @@ class CoffeeChatService(
         // 커피챗 찾기
         val coffeeChatEntity = getCoffeeChatEntity(coffeeChatId)
         // 대상 회사가 아니면 403
-        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.CURATOR)
+        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.COMPANY)
         // 업데이트
         if (coffeeChatEntity.coffeeChatStatus == CoffeeChatStatus.WAITING) {
             coffeeChatEntity.coffeeChatStatus = CoffeeChatStatus.ACCEPTED
@@ -219,7 +219,7 @@ class CoffeeChatService(
         // 커피챗 찾기
         val coffeeChatEntity = getCoffeeChatEntity(coffeeChatId)
         // 대상 회사가 아니면 403
-        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.CURATOR)
+        checkCoffeeChatAuthority(coffeeChatEntity, user, UserRole.COMPANY)
         // 업데이트
         if (coffeeChatEntity.coffeeChatStatus == CoffeeChatStatus.WAITING) {
             coffeeChatEntity.coffeeChatStatus = CoffeeChatStatus.REJECTED
@@ -240,7 +240,7 @@ class CoffeeChatService(
     fun getCoffeeChatListApplicant(
         user: User,
     ): List<CoffeeChatBrief> {
-        if (user.userRole != UserRole.NORMAL) {
+        if (user.userRole != UserRole.APPLICANT) {
             throw CoffeeChatUserForbiddenException(
                 details = mapOf("userId" to user.id, "userRole" to user.userRole),
             )
@@ -261,12 +261,12 @@ class CoffeeChatService(
     fun getCoffeeChatListCompany(
         user: User,
     ): List<CoffeeChatBrief> {
-        if (user.userRole != UserRole.CURATOR) {
+        if (user.userRole != UserRole.COMPANY) {
             throw CoffeeChatUserForbiddenException(
                 details = mapOf("userId" to user.id, "userRole" to user.userRole),
             )
         }
-        return coffeeChatRepository.findAllExceptStatusByCuratorId(user.id, CoffeeChatStatus.CANCELED)
+        return coffeeChatRepository.findAllExceptStatusByCompanyId(user.id, CoffeeChatStatus.CANCELED)
             .map { CoffeeChatBrief.fromEntity(it) }
     }
 
@@ -274,13 +274,13 @@ class CoffeeChatService(
         user: User,
     ): Int {
         return when (user.userRole) {
-            UserRole.NORMAL ->
+            UserRole.APPLICANT ->
                 coffeeChatRepository.countByApplicantIdAndChangedTrue(
                     applicantId = user.id,
                 ).toInt()
-            UserRole.CURATOR ->
-                coffeeChatRepository.countByCuratorIdAndStatus(
-                    curatorId = user.id,
+            UserRole.COMPANY ->
+                coffeeChatRepository.countByCompanyIdAndStatus(
+                    companyId = user.id,
                     status = CoffeeChatStatus.WAITING,
                 ).toInt()
         }
@@ -304,15 +304,15 @@ class CoffeeChatService(
             )
         }
         when (user.userRole) {
-            UserRole.NORMAL -> {
+            UserRole.APPLICANT -> {
                 if (coffeeChatEntity.applicant.id != user.id) {
                     throw CoffeeChatUserForbiddenException(
                         details = mapOf("userId" to user.id, "userRole" to user.userRole),
                     )
                 }
             }
-            UserRole.CURATOR -> {
-                if (coffeeChatEntity.position.company.curator.id != user.id) {
+            UserRole.COMPANY -> {
+                if (coffeeChatEntity.position.company.company.id != user.id) {
                     throw CoffeeChatUserForbiddenException(
                         details = mapOf("userId" to user.id, "userRole" to user.userRole),
                     )
@@ -331,7 +331,7 @@ class CoffeeChatService(
             details = mapOf("userId" to userId),
         )
 
-    // normal 유저 탈퇴 시 coffeeChat 데이터를 삭제
+    // 지원자 탈퇴 시 coffeeChat 데이터를 삭제
     @Transactional(propagation = Propagation.REQUIRED)
     fun deleteCoffeeChatByUser(userEntity: UserEntity) {
         coffeeChatRepository.deleteAllByApplicantId(userEntity.id)

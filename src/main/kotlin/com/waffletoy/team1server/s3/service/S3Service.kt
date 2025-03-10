@@ -12,7 +12,7 @@ import com.waffletoy.team1server.s3.S3SDKClientFailedException
 import com.waffletoy.team1server.s3.S3UrlGenerationFailedException
 import com.waffletoy.team1server.s3.controller.S3DownloadReq
 import com.waffletoy.team1server.s3.controller.S3UploadReq
-import com.waffletoy.team1server.user.dtos.User
+import com.waffletoy.team1server.user.dto.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service

@@ -28,7 +28,7 @@ data class CoffeeChatBrief(
             id = entity.id,
             postId = entity.position.id,
             title = entity.position.title,
-            company = entity.position.company.curator.let { CoffeeChatUserInfo.fromEntity(it) },
+            company = entity.position.company.company.let { CoffeeChatUserInfo.fromEntity(it) },
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
             coffeeChatStatus = entity.coffeeChatStatus,

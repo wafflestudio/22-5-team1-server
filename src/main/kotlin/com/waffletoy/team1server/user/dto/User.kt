@@ -1,4 +1,4 @@
-package com.waffletoy.team1server.user.dtos
+package com.waffletoy.team1server.user.dto
 
 import com.waffletoy.team1server.user.UserRole
 import com.waffletoy.team1server.user.persistence.UserEntity
@@ -10,9 +10,7 @@ data class User(
     val createdAt: LocalDateTime? = null,
     val updatedAt: LocalDateTime? = null,
     val userRole: UserRole,
-    val snuMail: String?,
-    val phoneNumber: String?,
-    val profileImageLink: String?,
+    val mail: String?,
 ) {
     companion object {
         fun fromEntity(
@@ -24,9 +22,7 @@ data class User(
                 createdAt = entity.createdAt,
                 updatedAt = entity.updatedAt,
                 userRole = entity.userRole,
-                snuMail = entity.snuMail,
-                phoneNumber = entity.phoneNumber,
-                profileImageLink = entity.profileImageLink,
+                mail = entity.mail,
             )
     }
 }

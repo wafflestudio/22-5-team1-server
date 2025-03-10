@@ -115,18 +115,4 @@ class UserRedisCacheService(
         val key = "$PREFIX_EMAIL_CODE_BY_SNUMAIL:$String"
         return redisTemplate.delete(key)
     }
-
-    //
-    // GENERAL
-    //
-
-    // db 리셋
-    // hardcode된 pattern 삭제, less prone to errors
-    fun deleteAll() {
-        try {
-            redisTemplate.connectionFactory?.connection?.serverCommands()?.flushAll()
-        } catch (e: Exception) {
-            logger.error(e.message, e)
-        }
-    }
 }

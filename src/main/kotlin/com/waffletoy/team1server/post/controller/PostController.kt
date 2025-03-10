@@ -4,7 +4,7 @@ import com.waffletoy.team1server.post.dto.*
 import com.waffletoy.team1server.post.service.PostService
 import com.waffletoy.team1server.user.AuthUser
 import com.waffletoy.team1server.user.AuthUserOrNull
-import com.waffletoy.team1server.user.dtos.User
+import com.waffletoy.team1server.user.dto.User
 import io.swagger.v3.oas.annotations.Parameter
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
@@ -100,24 +100,11 @@ class PostController(
     // dev
     @PostMapping("/dev/make-dummy")
     fun makeDummyPost(
-        @RequestBody cnt: Int,
         @RequestBody pw: PasswordRequest,
     ): ResponseEntity<Void> {
-        postService.makeDummyPosts(cnt, pw.pw)
+        postService.makeDummyPosts(3, pw.pw)
         return ResponseEntity.ok().build()
     }
-
-//    @PostMapping("/dev/reset-db")
-//    fun resetDBPosts(
-//        @RequestBody pw: PasswordRequest,
-//    ): ResponseEntity<Void> {
-//        if (pw.pw == "0000") {
-//            postService.resetDB(pw.pw)
-//            return ResponseEntity.ok().build()
-//        } else {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-//        }
-//    }
 
     @PostMapping("/company")
     fun createCompany(
@@ -176,15 +163,15 @@ class PostController(
     }
 
     @GetMapping("/company/me")
-    fun getCompanyByCurator(
+    fun getCompanyByCompany(
         @Parameter(hidden = true) @AuthUser user: User,
     ): ResponseEntity<List<Company>> {
-        val companies = postService.getCompanyByCurator(user)
+        val companies = postService.getCompanyByCompany(user)
         return ResponseEntity.ok(companies)
     }
 
     @GetMapping("/position/me")
-    fun getPostByCurator(
+    fun getPostByCompany(
         @Parameter(hidden = true) @AuthUser user: User,
         @RequestParam(required = false) roles: List<String>?,
         @RequestParam(required = false) @Min(0) investmentMax: Int?,
@@ -194,7 +181,7 @@ class PostController(
         @RequestParam(required = false) @Min(0) page: Int?,
         @RequestParam(required = false) @Min(0) @Max(1) order: Int?,
     ): ResponseEntity<PostWithPage> {
-        val posts = postService.getPostByCurator(user, roles, investmentMax, investmentMin, status, series, page ?: 0, order ?: 0)
+        val posts = postService.getPostByCompany(user, roles, investmentMax, investmentMin, status, series, page ?: 0, order ?: 0)
 
         // 총 페이지
         val totalPages = posts.totalPages

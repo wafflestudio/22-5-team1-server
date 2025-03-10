@@ -8,7 +8,7 @@ import com.waffletoy.team1server.post.dto.*
 import com.waffletoy.team1server.post.persistence.*
 import com.waffletoy.team1server.user.UserNotFoundException
 import com.waffletoy.team1server.user.UserRole
-import com.waffletoy.team1server.user.dtos.User
+import com.waffletoy.team1server.user.dto.User
 import com.waffletoy.team1server.user.persistence.*
 import com.waffletoy.team1server.user.service.UserService
 import org.springframework.beans.factory.annotation.Value
@@ -220,7 +220,7 @@ class PostService(
         val positions = mutableListOf<PositionEntity>()
 
         (1..cnt).forEach { index ->
-            val curator = userService.makeDummyUser(index)
+            val company = userService.makeDummyUser(index)
             val tags =
                 listOf("Tech", "Finance", "Health")
                     .shuffled()
@@ -230,7 +230,7 @@ class PostService(
 
             val companyEntity =
                 CompanyEntity(
-                    curator = curator,
+                    company = company,
                     companyName = "dummy Company $index",
                     explanation = "Explanation of dummy Company $index",
                     email = "dummy${index}_${Random.nextInt(0, 10001)}@example.com",
@@ -304,7 +304,7 @@ class PostService(
      * @param user The authenticated user creating the company.
      * @param request The DTO containing company creation data.
      * @return The created Company DTO.
-     * @throws NotAuthorizedException If user is not curator.
+     * @throws NotAuthorizedException If user is not company.
      * @throws PostCompanyExistsException If a company with the given email already exists.
      */
     @Transactional
@@ -312,7 +312,7 @@ class PostService(
         user: User,
         request: CreateCompanyRequest,
     ): Company {
-        if (user.userRole != UserRole.CURATOR) {
+        if (user.userRole != UserRole.COMPANY) {
             throw NotAuthorizedException()
         }
         val userEntity = userService.getUserEntityByUserId(user.id) ?: throw UserNotFoundException(mapOf("userId" to user.id))
@@ -324,7 +324,7 @@ class PostService(
         // Map CreateCompanyRequest to CompanyEntity
         val companyEntity =
             CompanyEntity(
-                curator = userEntity,
+                company = userEntity,
                 companyName = request.companyName,
                 email = request.email,
                 series = request.series,
@@ -353,7 +353,7 @@ class PostService(
         companyId: String,
     ): Company {
         var companyEntity = companyRepository.findByIdOrNull(companyId) ?: throw PostCompanyNotFoundException(mapOf("companyId" to companyId))
-        if (user.userRole != UserRole.CURATOR || companyEntity.curator.id != user.id) {
+        if (user.userRole != UserRole.COMPANY || companyEntity.company.id != user.id) {
             throw NotAuthorizedException()
         }
         companyEntity = updateCompanyEntityWithRequest(companyEntity, request)
@@ -385,23 +385,23 @@ class PostService(
         companyId: String,
     ) {
         val companyEntity = companyRepository.findByIdOrNull(companyId) ?: throw PostCompanyNotFoundException(mapOf("companyId" to companyId))
-        if (user.userRole != UserRole.CURATOR || companyEntity.curator.id != user.id) {
+        if (user.userRole != UserRole.COMPANY || companyEntity.company.id != user.id) {
             throw NotAuthorizedException()
         }
         companyRepository.delete(companyEntity)
     }
 
     @Transactional
-    fun getCompanyByCurator(user: User): List<Company> {
-        if (user.userRole != UserRole.CURATOR) {
+    fun getCompanyByCompany(user: User): List<Company> {
+        if (user.userRole != UserRole.COMPANY) {
             throw NotAuthorizedException()
         }
         val userEntity = userService.getUserEntityByUserId(user.id) ?: throw UserNotFoundException(mapOf("userId" to user.id))
-        return companyRepository.findAllByCurator(userEntity).map { Company.fromEntity(it) }
+        return companyRepository.findAllByCompany(userEntity).map { Company.fromEntity(it) }
     }
 
     @Transactional
-    fun getPostByCurator(
+    fun getPostByCompany(
         user: User,
         positions: List<String>?,
         investmentMax: Int?,
@@ -411,7 +411,7 @@ class PostService(
         page: Int = 0,
         order: Int = 0,
     ): Page<Post> {
-        if (user.userRole != UserRole.CURATOR) {
+        if (user.userRole != UserRole.COMPANY) {
             throw NotAuthorizedException()
         }
 
@@ -456,7 +456,7 @@ class PostService(
         user: User,
         request: CreatePositionRequest,
     ): Position {
-        if (user.userRole != UserRole.CURATOR) {
+        if (user.userRole != UserRole.COMPANY) {
             throw NotAuthorizedException()
         }
         // Retrieve the company by ID
@@ -464,8 +464,8 @@ class PostService(
             companyRepository.findByIdOrNull(request.companyId)
                 ?: throw PostCompanyNotFoundException(mapOf("companyId" to (request.companyId ?: "null")))
 
-        // Check if the user is the curator of the company
-        if (company.curator.id != user.id) {
+        // Check if the user is the owner of the company
+        if (company.company.id != user.id) {
             throw NotAuthorizedException()
         }
 
@@ -495,7 +495,7 @@ class PostService(
         request: UpdatePositionRequest,
     ): Position {
         var positionEntity = positionRepository.findByIdOrNull(positionId) ?: throw PostPositionNotFoundException(mapOf("positionId" to positionId))
-        if (user.userRole != UserRole.CURATOR || positionEntity.company.curator.id != user.id) {
+        if (user.userRole != UserRole.COMPANY || positionEntity.company.company.id != user.id) {
             throw NotAuthorizedException()
         }
         positionEntity = updatePositionEntityWithRequest(positionEntity, request)
@@ -521,14 +521,13 @@ class PostService(
         positionId: String,
     ) {
         val positionEntity = positionRepository.findByIdOrNull(positionId) ?: throw PostPositionNotFoundException(mapOf("positionId" to positionId))
-        if (user.userRole != UserRole.CURATOR || positionEntity.company.curator.id != user.id) {
+        if (user.userRole != UserRole.COMPANY || positionEntity.company.company.id != user.id) {
             throw NotAuthorizedException()
         }
         positionRepository.delete(positionEntity)
     }
 
-    // normal 유저 탈퇴 시 bookmark 데이터를 삭제
-    // curator 유저가 작성한 company, position 데이터는 유지
+    // 지원자 탈퇴 시 bookmark 데이터를 삭제
     @Transactional(propagation = Propagation.REQUIRED)
     fun deleteBookmarkByUser(userEntity: UserEntity) {
         bookmarkRepository.deleteAllByUser(userEntity)

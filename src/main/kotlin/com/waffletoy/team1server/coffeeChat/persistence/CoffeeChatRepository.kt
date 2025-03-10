@@ -10,19 +10,17 @@ import org.springframework.stereotype.Repository
 interface CoffeeChatRepository : JpaRepository<CoffeeChatEntity, String> {
     fun findAllByApplicantId(applicantId: String): List<CoffeeChatEntity>
 
-    fun findAllByPositionCompanyCuratorId(curatorId: String): List<CoffeeChatEntity>
-
     // 취소된 커피챗 제외, 대상 회사의 모든 커피챗을 가져오기
     @Query(
         """
     SELECT c 
     FROM CoffeeChatEntity c 
-    WHERE c.position.company.curator.id = :curatorId
+    WHERE c.position.company.company.id = :companyId
     AND c.coffeeChatStatus <> :excludedStatus
 """,
     )
-    fun findAllExceptStatusByCuratorId(
-        @Param("curatorId") curatorId: String,
+    fun findAllExceptStatusByCompanyId(
+        @Param("companyId") companyId: String,
         @Param("excludedStatus") excludedStatus: CoffeeChatStatus,
     ): List<CoffeeChatEntity>
 
@@ -43,12 +41,12 @@ interface CoffeeChatRepository : JpaRepository<CoffeeChatEntity, String> {
         """
     SELECT COUNT(c) 
     FROM CoffeeChatEntity c 
-    WHERE c.position.company.curator.id = :curatorId
+    WHERE c.position.company.company.id = :companyId
     AND c.coffeeChatStatus = :status
     """,
     )
-    fun countByCuratorIdAndStatus(
-        @Param("curatorId") curatorId: String,
+    fun countByCompanyIdAndStatus(
+        @Param("companyId") companyId: String,
         @Param("status") status: CoffeeChatStatus,
     ): Long
 }

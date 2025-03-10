@@ -1,8 +1,9 @@
 package com.waffletoy.team1server.user.utils
 
-import com.waffletoy.team1server.user.dtos.AccessToken
-import com.waffletoy.team1server.user.dtos.User
-import com.waffletoy.team1server.user.dtos.UserWithAccessToken
+import com.waffletoy.team1server.user.dto.Token
+import com.waffletoy.team1server.user.dto.User
+import com.waffletoy.team1server.user.dto.UserBrief
+import com.waffletoy.team1server.user.dto.UserWithAccessToken
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.ResponseEntity
 
@@ -18,7 +19,11 @@ object UserTokenResponseUtil {
 
         return ResponseEntity.ok(
             UserWithAccessToken(
-                user = user,
+                user =
+                    UserBrief(
+                        id = user.id,
+                        userRole = user.userRole,
+                    ),
                 token = tokens.accessToken,
             ),
         )
@@ -28,12 +33,12 @@ object UserTokenResponseUtil {
         tokens: UserTokenUtil.Tokens,
         response: HttpServletResponse,
         isSecure: Boolean = true,
-    ): ResponseEntity<AccessToken> {
+    ): ResponseEntity<Token> {
         val refreshTokenCookie = UserTokenUtil.createRefreshTokenCookie(tokens, isSecure = isSecure)
         response.addHeader("Set-Cookie", refreshTokenCookie.toString())
 
         return ResponseEntity.ok(
-            AccessToken(
+            Token(
                 accessToken = tokens.accessToken,
             ),
         )

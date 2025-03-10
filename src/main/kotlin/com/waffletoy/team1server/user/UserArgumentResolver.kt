@@ -3,7 +3,7 @@ package com.waffletoy.team1server.user
 import com.waffletoy.team1server.exceptions.ApiException
 import com.waffletoy.team1server.exceptions.BadAuthorizationHeaderException
 import com.waffletoy.team1server.exceptions.InvalidAccessTokenException
-import com.waffletoy.team1server.user.dtos.User
+import com.waffletoy.team1server.user.dto.User
 import com.waffletoy.team1server.user.service.UserService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

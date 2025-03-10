@@ -1,7 +1,7 @@
 package com.waffletoy.team1server.user.controller
 
 import com.waffletoy.team1server.user.AuthUser
-import com.waffletoy.team1server.user.dtos.*
+import com.waffletoy.team1server.user.dto.*
 import com.waffletoy.team1server.user.service.UserService
 import com.waffletoy.team1server.user.utils.UserTokenResponseUtil
 import io.swagger.v3.oas.annotations.Parameter
@@ -18,28 +18,8 @@ class UserController(
     private val userService: UserService,
     @Value("\${custom.is-secure}") private val isSecure: Boolean,
 ) {
-    // Endpoints for signups
-    // 로컬 아이디 중복 확인
-    @PostMapping("/signup/check-id")
-    fun checkDuplicateId(
-        @Valid @RequestBody request: CheckDuplicateIdRequest,
-    ): ResponseEntity<Void> {
-        userService.checkDuplicateId(request)
-        return ResponseEntity.ok().build()
-    }
-
-    // 스누메일 중복 확인
-    @PostMapping("/signup/check-snu-mail")
-    fun checkDuplicateSnuMail(
-        @Valid @RequestBody request: CheckDuplicateSnuMailRequest,
-        response: HttpServletResponse,
-    ): ResponseEntity<Void> {
-        userService.checkDuplicateSnuMail(request)
-        return ResponseEntity.ok().build()
-    }
-
-    // 회원가입(local_normal, local_curator)
-    @PostMapping("/signup")
+    // 회원가입
+    @PostMapping
     fun signUp(
         @Valid @RequestBody request: SignUpRequest,
         response: HttpServletResponse,
@@ -48,9 +28,8 @@ class UserController(
         return UserTokenResponseUtil.buildUserWithTokensResponse(user, tokens, response, isSecure)
     }
 
-    // Endpoints for sign in / sign out
-
-    @PostMapping("/signin")
+    // 로그인
+    @PostMapping("/auth")
     fun signIn(
         @Valid @RequestBody request: SignInRequest,
         response: HttpServletResponse,
@@ -59,7 +38,8 @@ class UserController(
         return UserTokenResponseUtil.buildUserWithTokensResponse(user, tokens, response, isSecure)
     }
 
-    @PostMapping("/signout")
+    // 로그아웃
+    @DeleteMapping("/auth")
     fun signOut(
         @Parameter(hidden = true) @AuthUser user: User,
         @CookieValue("refresh_token") refreshToken: String?,
@@ -74,11 +54,11 @@ class UserController(
     }
 
     // refresh token을 이용한 토큰 갱신
-    @PostMapping("/refresh-token")
+    @GetMapping("/token")
     fun refreshAccessToken(
         @CookieValue("refresh_token") refreshToken: String?,
         response: HttpServletResponse,
-    ): ResponseEntity<AccessToken> {
+    ): ResponseEntity<Token> {
         if (refreshToken.isNullOrBlank()) {
             return ResponseEntity.badRequest().build()
         }
@@ -86,23 +66,20 @@ class UserController(
         return UserTokenResponseUtil.buildTokensResponse(tokens, response)
     }
 
-    // Endpoints for snu mail
-    // 구글 access token 으로 구글 이메일 가져오기
-    @PostMapping("/snu-mail-verification/google-email")
-    fun fetchGoogleAccountEmail(
-        @RequestBody request: FetchGoogleAccountEmailRequest,
-    ): ResponseEntity<GoogleEmail> {
-        val email = userService.fetchGoogleAccountEmail(request)
-        return ResponseEntity.ok(
-            GoogleEmail(
-                googleEmail = email,
-            ),
-        )
+    // 메일 중복 확인
+    @PostMapping("/mail")
+    fun checkDuplicateMail(
+        @Valid @RequestBody request: MailRequest,
+        response: HttpServletResponse,
+    ): ResponseEntity<Void> {
+        userService.checkDuplicateMail(request)
+        return ResponseEntity.ok().build()
     }
 
-    @PostMapping("/snu-mail-verification/request")
+    // 스누메일 인증을 위한 코드 발송
+    @PostMapping("/snu-mail/verification")
     fun sendSnuMailVerification(
-        @Valid @RequestBody request: SendSnuMailVerificationRequest,
+        @Valid @RequestBody request: SnuMailRequest,
     ): ResponseEntity<Void> {
         userService.sendSnuMailVerification(request)
         return ResponseEntity.ok().build()
@@ -112,22 +89,12 @@ class UserController(
     fun checkSnuMailVerification(
         @Valid @RequestBody request: CheckSnuMailVerificationRequest,
     ): ResponseEntity<Void> {
-        userService.checkSnuMailVerification(request) // TODO: 뭐라도 Return해야 하지는 않을지
+        userService.checkSnuMailVerification(request)
         return ResponseEntity.ok().build()
     }
 
-    // TODO
-    @GetMapping("/me")
-    fun getUserInfo(
-        @Parameter(hidden = true) @AuthUser user: User,
-    ): ResponseEntity<User> {
-        return ResponseEntity.ok(user)
-    }
-
-    // User 부가 기능
-
     // 회원 탈퇴
-    @PostMapping("/withdraw")
+    @DeleteMapping
     fun deleteUser(
         @Parameter(hidden = true) @AuthUser user: User,
     ): ResponseEntity<Void> {
@@ -136,7 +103,7 @@ class UserController(
     }
 
     // 비밀 번호 변경
-    @PostMapping("/change-password")
+    @PatchMapping("/password")
     fun changePassword(
         @Parameter(hidden = true) @AuthUser user: User,
         @Valid @RequestBody request: ChangePasswordRequest,
@@ -145,56 +112,22 @@ class UserController(
         return ResponseEntity.ok().build()
     }
 
-    // 아이디(또는 소셜 로그인 정보)를 찾아 스누메일로 전송
-    @PostMapping("/help/find-Id")
-    fun findId(
-        @Valid @RequestBody request: FindIdRequest,
-    ): ResponseEntity<Void> {
-        userService.findIdAndFetchInfo(request)
-        return ResponseEntity.ok().build()
-    }
-
     // 임시 비밀번호를 스누메일로 전송
-    @PostMapping("/help/reset-password")
+    @PostMapping("/password")
     fun resetPassword(
-        @Valid @RequestBody request: ResetPasswordRequest,
+        @Valid @RequestBody request: MailRequest,
     ): ResponseEntity<Void> {
         userService.resetPassword(request)
         return ResponseEntity.ok().build()
     }
 
-    // Endpoint for resetting DB for testing
-    // reset DB는 비활성화
-//    @PostMapping("/resetDB")
-//    fun resetDatabase(
-//        @RequestHeader("X-Secret") secret: String,
-//    ): ResponseEntity<String> {
-//        userService.resetDatabase(secret)
-//        return ResponseEntity.ok("Database has been reset.")
-//    }
+    @GetMapping("/me")
+    fun getUserInfo(
+        @Parameter(hidden = true) @AuthUser user: User,
+    ): ResponseEntity<User> {
+        return ResponseEntity.ok(user)
+    }
 }
-
-data class CheckDuplicateIdRequest(
-    @field:NotBlank(message = "ID is required")
-    val id: String,
-)
-
-data class CheckDuplicateSnuMailRequest(
-    @field:NotBlank(message = "Email is required")
-    @field:Pattern(regexp = "^[a-zA-Z0-9._%+-]+@snu\\.ac\\.kr$", message = "Email must end with @snu.ac.kr")
-    val snuMail: String,
-)
-
-data class FetchGoogleAccountEmailRequest(
-    @field:NotBlank(message = "Access token is required")
-    val accessToken: String,
-)
-
-data class SendSnuMailVerificationRequest(
-    @field:NotBlank(message = "Email is required")
-    @field:Pattern(regexp = "^[a-zA-Z0-9._%+-]+@snu\\.ac\\.kr$", message = "Email must end with @snu.ac.kr")
-    val snuMail: String,
-)
 
 data class CheckSnuMailVerificationRequest(
     @field:NotBlank(message = "Email is required")
@@ -202,6 +135,18 @@ data class CheckSnuMailVerificationRequest(
     val snuMail: String,
     @field:NotBlank(message = "Verification code is required")
     val code: String,
+)
+
+data class SnuMailRequest(
+    @field:NotBlank(message = "Email is required")
+    @field:Pattern(regexp = "^[a-zA-Z0-9._%+-]+@snu\\.ac\\.kr$", message = "Email must end with @snu.ac.kr")
+    val snuMail: String,
+)
+
+data class MailRequest(
+    @field:NotBlank(message = "email is required")
+    @field:Email(message = "email is required")
+    val mail: String,
 )
 
 data class ChangePasswordRequest(
@@ -215,16 +160,4 @@ data class ChangePasswordRequest(
         message = "Password must contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
     )
     val newPassword: String,
-)
-
-data class FindIdRequest(
-    @field:NotBlank(message = "Email is required")
-    @field:Pattern(regexp = "^[a-zA-Z0-9._%+-]+@snu\\.ac\\.kr$", message = "Email must end with @snu.ac.kr")
-    val snuMail: String,
-)
-
-data class ResetPasswordRequest(
-    @field:NotBlank(message = "Email is required")
-    @field:Pattern(regexp = "^[a-zA-Z0-9._%+-]+@snu\\.ac\\.kr$", message = "Email must end with @snu.ac.kr")
-    val snuMail: String,
 )
