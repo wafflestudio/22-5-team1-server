@@ -10,7 +10,7 @@ data class PutApplicantRequest(
     val enrollYear: Int,
     @field:NotBlank(message = "department is required")
     val department: String,
-    val positions: List<JobCategory>? = null,
+    val positions: List<String>? = null,
     @field:Size(max = 100, message = "slogan must be at most 100 characters")
     val slogan: String? = null,
     @field:Size(max = 1000, message = "explanation must be at most 1000 characters")

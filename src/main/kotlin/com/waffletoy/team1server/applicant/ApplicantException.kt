@@ -12,8 +12,3 @@ class ApplicantNotFoundException(details: Map<String, Any>? = null) : ApiExcepti
     errorCode = ErrorCode.APPLICANT_NOT_FOUND,
     details = details,
 )
-
-class ApplicantPortfolioForbidden(details: Map<String, Any>? = null) : ApiException(
-    errorCode = ErrorCode.APPLICANT_PORTFOLIO_FORBIDDEN,
-    details = details,
-)

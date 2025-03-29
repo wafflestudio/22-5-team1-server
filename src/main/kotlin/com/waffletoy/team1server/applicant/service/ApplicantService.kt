@@ -1,10 +1,8 @@
 package com.waffletoy.team1server.applicant.service
 
 import com.waffletoy.team1server.applicant.ApplicantNotFoundException
-import com.waffletoy.team1server.applicant.ApplicantPortfolioForbidden
 import com.waffletoy.team1server.applicant.ApplicantUserForbiddenException
 import com.waffletoy.team1server.applicant.dto.ApplicantResponse
-import com.waffletoy.team1server.applicant.dto.JobCategory
 import com.waffletoy.team1server.applicant.dto.PutApplicantRequest
 import com.waffletoy.team1server.applicant.persistence.ApplicantEntity
 import com.waffletoy.team1server.applicant.persistence.ApplicantRepository
@@ -59,10 +57,6 @@ class ApplicantService(
         val userEntity: UserEntity? = userRepository.findByIdOrNull(user.id)
         if (userEntity == null) {
             throw UserNotFoundException()
-        }
-
-        if (request.portfolioKey != null && request.positions?.contains(JobCategory.DESIGN) != true) {
-            throw ApplicantPortfolioForbidden()
         }
 
         val applicantEntity: ApplicantEntity? = applicantRepository.findByUserId(user.id)

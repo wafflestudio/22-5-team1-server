@@ -23,11 +23,11 @@ data class CreateCompanyRequest(
     @field:URL(message = "Company PDF link must be a valid URL.")
     val companyInfoPDFLink: String? = null,
     @field:URL(message = "Landing page link must be a valid URL.")
-    val landingPageLink: String? = null,
+    val landingPageLink: String,
     @field:NotBlank(message = "VC name is required.")
-    val vcName: String? = null,
+    val vcName: String,
     @field:NotBlank(message = "VC recommendation is required.")
-    val vcRec: String? = null,
+    val vcRec: String,
     @field:Valid
     val links: List<Link> = emptyList(),
     @field:Valid

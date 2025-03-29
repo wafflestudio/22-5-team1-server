@@ -12,7 +12,7 @@ data class CreatePositionRequest(
     @field:NotBlank(message = "Position detail is required.")
     val detail: String,
     @field:Max(value = 9999, message = "Headcount must not exceed 9999.")
-    @field:Min(value = 0, message = "Headcount must be at least 0.")
+    @field:Min(value = 1, message = "Headcount must be at least 1.")
     val headCount: Int,
     val salary: Int? = null,
     val employmentEndDate: LocalDateTime? = null,

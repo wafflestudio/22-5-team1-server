@@ -36,7 +36,6 @@ enum class ErrorCode(
     // Applicant-related errors
     APPLICANT_USER_FORBIDDEN("APPLICANT_001", "You do not have permission to perform this action.", HttpStatus.FORBIDDEN),
     APPLICANT_NOT_FOUND("APPLICANT_002", "Applicant not found.", HttpStatus.NOT_FOUND),
-    APPLICANT_PORTFOLIO_FORBIDDEN("APPLICANT_003", "Applicant except designer is not allowed to have portfolioKey", HttpStatus.FORBIDDEN),
 
     // Post-related errors
     POST_NOT_FOUND("POST_001", "The requested post was not found.", HttpStatus.NOT_FOUND),

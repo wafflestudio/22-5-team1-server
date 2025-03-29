@@ -16,11 +16,11 @@ class Company(
     val profileImageKey: String,
     // 선택 정보
     val companyInfoPDFLink: String?,
-    val landingPageLink: String?,
+    val landingPageLink: String,
     val links: List<Link>,
     val tags: List<Tag>,
-    val vcName: String?,
-    val vcRec: String?,
+    val vcName: String,
+    val vcRec: String,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 ) {

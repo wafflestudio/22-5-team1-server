@@ -1,9 +1,11 @@
 package com.waffletoy.team1server.applicant.dto
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.waffletoy.team1server.applicant.persistence.ApplicantEntity
 import com.waffletoy.team1server.auth.UserRole
 import java.time.LocalDateTime
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class ApplicantResponse(
     val id: String,
     val name: String,
@@ -13,7 +15,7 @@ data class ApplicantResponse(
     val email: String,
     val enrollYear: Int? = null,
     val department: String? = null,
-    val positions: List<JobCategory>? = null,
+    val positions: List<String>? = null,
     val slogan: String? = null,
     val explanation: String? = null,
     val stacks: List<String>? = null,
