@@ -40,3 +40,6 @@ out/
 .kotlin
 
 .env*
+
+# Ignore HTTP Client Environment File
+src/test/resources/http-client.private.env.json

@@ -1,0 +1,136 @@
+### 1. 지원자 회원가입
+POST http://localhost:8080/api/auth/user
+Content-Type: application/json
+
+{
+  "authType": "APPLICANT",
+  "info": {
+    "type": "APPLICANT",
+    "name": "APPLICANT002",
+    "mail": "APPLICANT002@snu.ac.kr",
+    "password": "APPLICANT002"
+  }
+}
+> {% client.global.set("access_token_applicant2", response.body.token) %}
+
+### 2. 지원자 로그인
+POST http://localhost:8080/api/auth/user/session
+Content-Type: application/json
+
+{
+  "mail": "APPLICANT002@snu.ac.kr",
+  "password": "APPLICANT002"
+}
+> {%
+    client.global.set("access_token_applicant2", response.body.token);
+%}
+
+### 3. 지원자 정보 생성/수정하기
+PUT http://localhost:8080/api/applicant/me
+Content-Type: application/json
+Authorization: Bearer {{access_token_applicant2}}
+
+{
+  "enrollYear": 2023,
+  "department": "컴퓨터공학부",
+  "positions": [
+    "BACKEND",
+    "FRONT"
+  ],
+  "slogan": "슬로건!",
+  "explanation": "설명~",
+  "stacks": [
+    "Kotlin",
+    "Spring Boot",
+    "React",
+    "Docker"
+  ],
+  "imageKey": "images/applicant_profile.jpg",
+  "cvKey": "files/cv.pdf",
+  "links": [
+    {
+      "description": "GitHub",
+      "link": "https://github.com/username"
+    },
+    {
+      "description": "LinkedIn",
+      "link": "https://www.linkedin.com/in/username"
+    }
+  ]
+}
+
+### 4. 지원자 정보 불러오기
+GET http://localhost:8080/api/applicant/me
+Content-Type: application/json
+Authorization: Bearer {{access_token_applicant2}}
+
+### 5. 회사 회원가입
+POST http://localhost:8080/api/auth/user
+Content-Type: application/json
+
+{
+  "authType": "COMPANY",
+  "info": {
+    "type": "COMPANY",
+    "name": "COMPANY002",
+    "secretPassword": "{{SECRET_FOR_INTERNHASHA}}",
+    "mail": "COMPANY002@gmail.com",
+    "password": "COMPANY002"
+  }
+}
+> {% client.global.set("access_token_company2", response.body.token) %}
+
+
+### 6. 회사 로그인
+POST http://localhost:8080/api/auth/user/session
+Content-Type: application/json
+
+{
+  "mail": "COMPANY002@gmail.com",
+  "password": "COMPANY002"
+}
+> {%
+    client.global.set("access_token_company2", response.body.token);
+%}
+
+### 7. 회사 정보 생성/수정하기
+PUT http://localhost:8080/api/company/me
+Content-Type: application/json
+Authorization: Bearer {{access_token_company2}}
+
+{
+  "companyEstablishedYear": 2000,
+  "domain": "tech",
+  "headcount": 150,
+  "location": "Seoul, South Korea",
+  "slogan": "Innovating the Future",
+  "detail": "We are a cutting-edge tech company specializing in AI and software solutions.",
+  "profileImageKey": "profile-image-key-123",
+  "companyInfoPDFLink": "https://example.com/company-info.pdf",
+  "landingPageLink": "https://example.com",
+  "vcName": "Seoul Ventures",
+  "vcRec": "Highly recommended by Seoul Ventures for innovation and growth potential.",
+  "links": [
+    {
+      "description": "Homepage",
+      "link": "https://example.com/homepage"
+    },
+    {
+      "description": "GitHub",
+      "link": "https://github.com/company"
+    }
+  ],
+  "tags": [
+    {
+      "tag": "AI"
+    },
+    {
+      "tag": "Software"
+    }
+  ]
+}
+
+### 8. 회사 정보 불러오기
+GET http://localhost:8080/api/company/me
+Content-Type: application/json
+Authorization: Bearer {{access_token_company2}}

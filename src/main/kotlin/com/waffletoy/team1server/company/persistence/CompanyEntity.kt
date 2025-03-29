@@ -38,11 +38,11 @@ class CompanyEntity(
     @Column(name = "COMPANY_INFO_PDF_LINK", length = 2048, nullable = true)
     open var companyInfoPDFLink: String? = null,
     @Column(name = "LANDING_PAGE_LINK", length = 2048, nullable = true)
-    open var landingPageLink: String,
+    open var landingPageLink: String?,
     @Column(name = "VC_NAME", nullable = true)
-    open var vcName: String,
+    open var vcName: String?,
     @Column(name = "VC_REC", nullable = true)
-    open var vcRec: String,
+    open var vcRec: String?,
     @CreatedDate
     @Column(name = "CREATED_AT", nullable = false, updatable = false)
     open var createdAt: LocalDateTime = LocalDateTime.now(),

@@ -1,0 +1,110 @@
+### 1. 회사 로그인 - Me.http의 5~7번으로 미리 회사 엔티티 설정 필요
+POST http://localhost:8080/api/auth/user/session
+Content-Type: application/json
+
+{
+  "mail": "COMPANY002@gmail.com",
+  "password": "COMPANY002"
+}
+> {%
+    client.global.set("access_token_company2", response.body.token);
+%}
+
+### 2. 회사 정보 불러오기
+GET http://localhost:8080/api/company/me
+Content-Type: application/json
+Authorization: Bearer {{access_token_company2}}
+
+> {%
+    client.global.set("company_id2", response.body[0].id);
+%}
+
+### 3. 채용 포지션 생성하기
+POST http://localhost:8080/api/post/position
+Authorization: Bearer {{access_token_company2}}
+Content-Type: application/json
+
+{
+  "positionTitle": "Backend Developer",
+  "positionType": "BACKEND",
+  "detail": "Develop and maintain scalable backend systems using Kotlin and Spring Boot.",
+  "headCount": 5,
+  "salary": 7000,
+  "employmentEndDate": "2025-12-31T23:59:59",
+  "isActive": true,
+  "companyId": "{{company_id2}}"
+}
+> {%
+    client.global.set("post_id2", response.body.id);
+%}
+
+### 4. 채용 공고 리스트 불러오기
+GET http://localhost:8080/api/post
+
+> {%
+    client.global.set("post_id2", response.body.posts[0].id);
+%}
+
+### 5. 채용 공고 상세 페이지 불러오기
+GET http://localhost:8080/api/post/{{post_id2}}
+
+
+### 6. 채용 포지션 업데이트하기
+PUT http://localhost:8080/api/post/position/{{post_id2}}
+Authorization: Bearer {{access_token_company2}}
+Content-Type: application/json
+
+{
+  "positionTitle": "Frontend Developer",
+  "positionType": "FRONT",
+  "detail": "Develop and maintain scalable backend systems using Kotlin and Spring Boot.",
+  "headCount": 5,
+  "salary": 7000,
+  "employmentEndDate": "2025-12-31T23:59:59",
+  "isActive": true,
+  "companyId": "{{company_id2}}"
+}
+
+### 7. 회사가 등록한 채용 공고 불러오기
+GET http://localhost:8080/api/post/position/me?roles=engineer,designer&page=0&order=0
+Authorization: Bearer {{access_token_company2}}
+
+### 8-1. 지원자 회원가입 - Me.http에서 이미 계정 생성 했으면 8-2 로그인으로
+POST http://localhost:8080/api/auth/user
+Content-Type: application/json
+
+{
+  "authType": "APPLICANT",
+  "info": {
+    "type": "APPLICANT",
+    "name": "APPLICANT002",
+    "mail": "APPLICANT002@snu.ac.kr",
+    "password": "APPLICANT002"
+  }
+}
+> {% client.global.set("access_token_applicant2", response.body.token) %}
+
+### 8-2. 지원자 로그인
+POST http://localhost:8080/api/auth/user/session
+Content-Type: application/json
+
+{
+  "mail": "APPLICANT002@snu.ac.kr",
+  "password": "APPLICANT002"
+}
+> {%
+    client.global.set("access_token_applicant2", response.body.token);
+%}
+
+### 관심 채용 추가하기
+POST http://localhost:8080/api/post/{{post_id2}}/bookmark
+Authorization: Bearer {{access_token_applicant2}}
+
+### 관심 채용 삭제하기
+DELETE http://localhost:8080/api/post/{{post_id2}}/bookmark
+Authorization: Bearer {{access_token_applicant2}}
+
+### 북마크 가져오기
+GET http://localhost:8080/api/post/bookmarks?page=0
+Authorization: Bearer {{access_token_applicant2}}
+

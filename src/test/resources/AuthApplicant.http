@@ -1,0 +1,97 @@
+### 0. 지원자 계정 메일
+@test_mail=endermaru@snu.ac.kr
+
+### 1. 지원자 회원가입
+POST http://localhost:8080/api/auth/user
+Content-Type: application/json
+
+{
+  "authType": "APPLICANT",
+  "info": {
+    "type": "APPLICANT",
+    "name": "APPLICANT001",
+    "mail": "{{test_mail}}",
+    "password": "APPLICANT001"
+  }
+}
+> {% client.global.set("access_token_applicant", response.body.token) %}
+
+
+### 2. 지원자 로그인
+POST http://localhost:8080/api/auth/user/session
+Content-Type: application/json
+
+{
+  "mail": "{{test_mail}}",
+  "password": "APPLICANT001"
+}
+> {%
+    client.global.set("access_token_applicant", response.body.token);
+%}
+
+### 3. 사용자 정보 조회
+GET http://localhost:8080/api/auth/me
+Authorization: Bearer {{access_token_applicant}}
+
+### 4. 토큰 갱신
+GET http://localhost:8080/api/auth/token
+
+> {%
+    client.global.set("access_token_applicant", response.body.accessToken);
+%}
+
+### 5. 메일 중복 확인
+POST http://localhost:8080/api/auth/mail
+Content-Type: application/json
+
+{
+  "mail": "{{test_mail}}"
+}
+
+### 6. 스누메일 인증 코드 발송
+POST http://localhost:8080/api/auth/mail/verify
+Content-Type: application/json
+
+{
+  "snuMail": "{{test_mail}}"
+}
+
+### 7. 스누메일 인증 코드 확인
+POST http://localhost:8080/api/auth/mail/validate
+Content-Type: application/json
+
+{
+  "snuMail": "{{test_mail}}",
+  "code": "391443"
+}
+
+### 8. 비밀번호 초기화 (임시 비밀번호 발급)
+POST http://localhost:8080/api/auth/password
+Content-Type: application/json
+
+{
+  "mail": "{{test_mail}}"
+}
+
+
+### 9. 비밀번호 변경
+PATCH http://localhost:8080/api/auth/password
+Authorization: Bearer {{access_token_applicant}}
+Content-Type: application/json
+
+{
+  "oldPassword": "APPLICANT001",
+  "newPassword": "APPLICANT001"
+}
+
+
+### 10. 로그아웃 - access token 값은 일정 시간 내 계속 유효함
+DELETE http://localhost:8080/api/auth/user/session
+Authorization: Bearer {{access_token_applicant}}
+
+### 11. 회원 탈퇴
+DELETE http://localhost:8080/api/auth/user
+Authorization: Bearer {{access_token_applicant}}
+
+
+

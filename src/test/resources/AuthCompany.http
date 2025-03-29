@@ -1,0 +1,38 @@
+### 1. 회사 회원가입
+POST http://localhost:8080/api/auth/user
+Content-Type: application/json
+
+{
+  "authType": "COMPANY",
+  "info": {
+    "type": "COMPANY",
+    "name": "COMPANY001",
+    "secretPassword": "{{SECRET_FOR_INTERNHASHA}}",
+    "mail": "COMPANY001@gmail.com",
+    "password": "COMPANY001"
+  }
+}
+> {% client.global.set("access_token_company", response.body.token) %}
+
+
+### 2. 회사 로그인
+POST http://localhost:8080/api/auth/user/session
+Content-Type: application/json
+
+{
+  "mail": "COMPANY001@gmail.com",
+  "password": "COMPANY001"
+}
+> {%
+    client.global.set("access_token_company", response.body.token);
+%}
+
+### 3. 사용자 정보 조회
+GET http://localhost:8080/api/auth/me
+Authorization: Bearer {{access_token_company}}
+
+### 4. 로그아웃 - access token 값은 일정 시간 내 계속 유효함
+DELETE http://localhost:8080/api/auth/user/session
+Authorization: Bearer {{access_token_company}}
+
+### 회원 탈퇴는 불가

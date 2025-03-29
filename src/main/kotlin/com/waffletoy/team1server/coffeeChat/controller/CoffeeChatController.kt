@@ -36,7 +36,7 @@ class CoffeeChatController(
     }
 
     // 지원자 - 이미 대기 중 커피챗 있는지 확인
-    @GetMapping("/{postId}")
+    @GetMapping("/{postId}/status")
     fun checkIsSubmitted(
         @Parameter(hidden = true) @AuthUser user: User,
         @PathVariable postId: String,

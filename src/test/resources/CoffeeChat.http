@@ -1,0 +1,128 @@
+### 1. 회사 로그인 - Me.http의 5~7번으로 미리 회사 엔티티 설정 필요
+POST http://localhost:8080/api/auth/user/session
+Content-Type: application/json
+
+{
+  "mail": "COMPANY002@gmail.com",
+  "password": "COMPANY002"
+}
+> {%
+    client.global.set("access_token_company2", response.body.token);
+%}
+
+### 2. 회사 정보 불러오기
+GET http://localhost:8080/api/company/me
+Content-Type: application/json
+Authorization: Bearer {{access_token_company2}}
+
+> {%
+    client.global.set("company_id2", response.body[0].id);
+%}
+
+### 3. 채용 포지션 생성하기
+POST http://localhost:8080/api/post/position
+Authorization: Bearer {{access_token_company2}}
+Content-Type: application/json
+
+{
+  "positionTitle": "Backend Developer",
+  "positionType": "BACKEND",
+  "detail": "Develop and maintain scalable backend systems using Kotlin and Spring Boot.",
+  "headCount": 5,
+  "salary": 7000,
+  "employmentEndDate": "2025-12-31T23:59:59",
+  "isActive": true,
+  "companyId": "{{company_id2}}"
+}
+> {%
+    client.global.set("post_id2", response.body.id);
+%}
+
+### 4. 지원자 로그인 - Me.http의 1~3번으로 미리 지원자 엔티티 설정 필요
+POST http://localhost:8080/api/auth/user/session
+Content-Type: application/json
+
+{
+  "mail": "APPLICANT002@snu.ac.kr",
+  "password": "APPLICANT002"
+}
+> {%
+    client.global.set("access_token_applicant2", response.body.token);
+%}
+
+### 5. 채용 공고 리스트 불러오기
+GET http://localhost:8080/api/post
+
+> {%
+    client.global.set("post_id2", response.body.posts[0].id);
+%}
+
+### 6. 지원자 - 커피챗 신청하기
+POST http://localhost:8080/api/coffeeChat/{{post_id2}}
+Authorization: Bearer {{access_token_applicant2}}
+Content-Type: application/json
+
+{
+  "content": "신청합니다"
+}
+
+> {%
+    client.global.set("coffeeChat_id2", response.body.id);
+%}
+
+### 7. 커피챗 상세 페이지 불러오기
+GET http://localhost:8080/api/coffeeChat/{{coffeeChat_id2}}
+Authorization: Bearer {{access_token_applicant2}}
+
+### 8. 지원자 - 커피챗 수정하기
+PUT http://localhost:8080/api/coffeeChat/{{coffeeChat_id2}}
+Authorization: Bearer {{access_token_applicant2}}
+Content-Type: application/json
+
+{
+  "content": "!다니합청신"
+}
+
+### 9. 지원자 - 커피챗 목록 불러오기
+GET http://localhost:8080/api/coffeeChat
+Authorization: Bearer {{access_token_applicant2}}
+
+> {%
+    client.global.set("coffeeChat_id2", response.body.coffeeChatList[0].id);
+%}
+
+### 10. 회사 - 커피챗 목록 불러오기
+GET http://localhost:8080/api/coffeeChat
+Authorization: Bearer {{access_token_company2}}
+
+### 10. 해당 공고에 대기 중 커피챗 있는지 확인
+GET http://localhost:8080/api/coffeeChat/{{post_id2}}/status
+Authorization: Bearer {{access_token_applicant2}}
+
+### 11. 지원자 - 커피챗 취소 하기 - 다시 커피챗 작성 시 6번 시도
+PATCH http://localhost:8080/api/coffeeChat
+Authorization: Bearer {{access_token_applicant2}}
+Content-Type: application/json
+
+{
+  "coffeeChatStatus": "CANCELED",
+  "coffeeChatList": ["{{coffeeChat_id2}}"]
+}
+
+### 13. 회사 - 배지 표시 커피챗 개수 확인
+GET http://localhost:8080/api/coffeeChat/count
+Authorization: Bearer {{access_token_company2}}
+
+### 12. 회사 - 커피챗 승인
+PATCH http://localhost:8080/api/coffeeChat
+Authorization: Bearer {{access_token_company2}}
+Content-Type: application/json
+
+{
+  "coffeeChatStatus": "ACCEPTED",
+  "coffeeChatList": ["{{coffeeChat_id2}}"]
+}
+
+### 13. 지원자 - 배지 표시 커피챗 개수 확인
+GET http://localhost:8080/api/coffeeChat/count
+Authorization: Bearer {{access_token_applicant2}}
