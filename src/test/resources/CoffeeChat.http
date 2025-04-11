@@ -16,7 +16,7 @@ Content-Type: application/json
 Authorization: Bearer {{access_token_company2}}
 
 > {%
-    client.global.set("company_id2", response.body[0].id);
+    client.global.set("company_id2", response.body.id);
 %}
 
 ### 3. 채용 포지션 생성하기

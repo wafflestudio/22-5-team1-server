@@ -8,7 +8,8 @@ Content-Type: application/json
     "type": "APPLICANT",
     "name": "APPLICANT002",
     "email": "APPLICANT002@snu.ac.kr",
-    "password": "APPLICANT002"
+    "password": "APPLICANT002",
+    "successCode": "{{SECRET_FOR_INTERNHASHA}}"
   }
 }
 > {% client.global.set("access_token_applicant2", response.body.token) %}

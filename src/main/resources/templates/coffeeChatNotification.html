@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>커피챗 알림 메일 | 인턴하샤</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 40px; margin: 0;">
+
+<div style="max-width: 520px; margin: 0 auto; background-color: #ffffff; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; overflow: hidden;">
+
+    <!-- 헤더 -->
+    <div style="background-color: #f2f4f6; padding: 16px 24px; font-size: 18px;
+                font-weight: bold; color: #222; border-bottom: 1px solid #e0e0e0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <td align="left" style="font-size:16px; font-weight:bold; color:#222;">
+                    인턴하샤
+                </td>
+                <td align="right" style="font-size:13px;">
+                    <a href="https://www.survey-josha.site/mypage/"
+                       target="_blank" rel="noopener noreferrer"
+                       style="font-size:13px; font-weight:bold; color:#666; text-decoration:none;">
+                        대기중인 커피챗
+                        <span th:text="${waiting}" style="display:inline-block; border:1px solid #ccc; border-radius:50%;
+                              width:24px; height:24px; text-align:center; line-height:24px;
+                              font-size:13px; margin-left:6px; background-color:#fafafa;">
+                            4
+                        </span>
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 본문 -->
+    <div style="padding: 24px 24px 8px 24px; line-height: 1.7; font-size: 15px; color: #444;">
+
+        <!-- 본문 알림 -->
+        <div style="padding: 16px; font-size: 18px; margin-bottom: 20px;
+                    line-height: 1.6; text-align: center; font-weight: bold;">
+            지원자가 "<span th:text="${title}">공고 제목</span>" 공고에<br/>
+            커피챗을 신청하였습니다!
+        </div>
+
+        <!-- 유저 정보 -->
+        <div style="font-size: 14px; margin-bottom: 16px; color: #444;">
+            <strong th:text="${name}">홍길동</strong>
+            <span th:text="${email}" style="color: #888;">hong@snu.ac.kr</span>
+        </div>
+
+        <!-- 커피챗 상세 내용 -->
+        <div th:text="${content}" style="border: 1px solid #ddd; border-radius: 8px; min-height: 100px;
+                    padding: 16px; font-size: 14px; background-color: #f9f9f9;
+                    color: #555; margin-bottom: 24px;">
+            커피챗 신청 상세 내용
+        </div>
+
+        <!-- 상세보기 버튼 -->
+        <div style="text-align: center;">
+            <a th:href="@{'https://' + ${domain} + '/coffeeChat/' + ${coffeeChatId}}"
+               target="_blank" rel="noopener noreferrer"
+               style="display:inline-block; padding:12px 20px; font-size:14px; border:1px solid #ddd;
+                      border-radius:8px; text-decoration:none; background-color:#444;
+                      color:#f8f8f8; font-weight:bold;">
+                상세한 커피챗 보러 가기
+            </a>
+        </div>
+
+        <!-- 하단 우측 텍스트 -->
+        <div style="text-align: right; font-size: 12px; color: #aaa;
+                    margin-top: 32px; margin-bottom: 16px;">
+            <a href="#" target="_blank" rel="noopener noreferrer"
+               style="font-size:13px; font-weight:bold; color:#666;">
+                인턴하샤 알림설정
+            </a>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div style="background-color: #f9f9f9; border-top: 1px solid #e0e0e0;
+                padding: 16px 24px; font-size: 12px; color: #999;">
+        본 메일은 발신전용 메일이므로 회신하셔도 답변을 받지 못할 수 있습니다.<br/>
+        &copy; 2025 인턴하샤 All Rights Reserved.
+    </div>
+
+</div>
+
+</body>
+</html>

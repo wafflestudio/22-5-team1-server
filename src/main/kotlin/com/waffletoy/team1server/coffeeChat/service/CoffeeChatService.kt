@@ -9,6 +9,8 @@ import com.waffletoy.team1server.coffeeChat.controller.*
 import com.waffletoy.team1server.coffeeChat.dto.*
 import com.waffletoy.team1server.coffeeChat.persistence.CoffeeChatEntity
 import com.waffletoy.team1server.coffeeChat.persistence.CoffeeChatRepository
+import com.waffletoy.team1server.email.EmailType
+import com.waffletoy.team1server.email.service.EmailService
 import com.waffletoy.team1server.post.PostNotFoundException
 import com.waffletoy.team1server.post.PostPositionNotFoundException
 import com.waffletoy.team1server.post.persistence.PositionEntity
@@ -26,6 +28,7 @@ class CoffeeChatService(
     private val coffeeChatRepository: CoffeeChatRepository,
     @Lazy private val authService: AuthService,
     @Lazy private val postService: PostService,
+    @Lazy private val emailService: EmailService,
 ) {
     @Value("\${custom.page.size:12}")
     private val pageSize: Int = 12
@@ -133,6 +136,15 @@ class CoffeeChatService(
                         ),
                 )
             }
+
+        // 회사에 이메일 전송
+        emailService.sendEmail(
+            to = positionEntity.company.user.email,
+            type = EmailType.Notification,
+            subject = "[인턴하샤] 지원자 커피챗 안내",
+            text = "",
+            coffeeChatEntity = coffeeChatEntity,
+        )
 
         return CoffeeChatApplicant.fromEntity(coffeeChatEntity)
     }
